@@ -1,0 +1,108 @@
+erDiagram
+    REGIONS {
+        int region_id PK
+        varchar region_name
+        char region_code
+    }
+
+    COUNTRIES {
+        int country_id PK
+        char iso_alpha2
+        char iso_alpha3
+        varchar country_name
+        int region_id FK
+        numeric gdp_usd
+        bigint population
+        bool wto_member
+        date joined_wto
+    }
+
+    PRODUCT_CATEGORIES {
+        int category_id PK
+        varchar category_name
+        smallint hs_section
+    }
+
+    PRODUCTS {
+        int product_id PK
+        char hs_code
+        varchar product_name
+        int category_id FK
+        varchar unit_of_measure
+    }
+
+    TRADE_AGREEMENTS {
+        int agreement_id PK
+        varchar agreement_name
+        varchar agreement_type
+        date signed_date
+        date effective_date
+        date expiry_date
+        text description
+    }
+
+    AGREEMENT_MEMBERS {
+        int agreement_id PK_FK
+        int country_id PK_FK
+        date joined_date
+        varchar status
+    }
+
+    TRADE_FLOWS {
+        int flow_id PK
+        int exporter_id FK
+        int importer_id FK
+        int product_id FK
+        smallint year
+        numeric trade_value_usd
+        numeric quantity
+        varchar data_source
+    }
+
+    TARIFFS {
+        int tariff_id PK
+        int importing_country FK
+        int exporting_country FK
+        int product_id FK
+        smallint year
+        numeric mfn_rate
+        numeric applied_rate
+        numeric specific_duty
+        int agreement_id FK
+        text notes
+    }
+
+    EXCHANGE_RATES {
+        int rate_id PK
+        int country_id FK
+        smallint year
+        char currency_code
+        numeric usd_rate
+    }
+
+    SANCTIONS {
+        int sanction_id PK
+        int imposing_country FK
+        int target_country FK
+        int product_id FK
+        date start_date
+        date end_date
+        varchar sanction_type
+        text legal_basis
+    }
+
+    REGIONS            ||--o{ COUNTRIES           : "groups"
+    COUNTRIES          ||--o{ AGREEMENT_MEMBERS   : "joins"
+    TRADE_AGREEMENTS   ||--o{ AGREEMENT_MEMBERS   : "governs"
+    PRODUCT_CATEGORIES ||--o{ PRODUCTS            : "classifies"
+    COUNTRIES          ||--o{ TRADE_FLOWS         : "exports"
+    COUNTRIES          ||--o{ TRADE_FLOWS         : "imports"
+    PRODUCTS           ||--o{ TRADE_FLOWS         : "traded_as"
+    COUNTRIES          ||--o{ TARIFFS             : "imposes"
+    COUNTRIES          ||--o{ TARIFFS             : "faces"
+    PRODUCTS           ||--o{ TARIFFS             : "subject_to"
+    TRADE_AGREEMENTS   ||--o{ TARIFFS             : "reduces"
+    COUNTRIES          ||--o{ EXCHANGE_RATES      : "has"
+    COUNTRIES          ||--o{ SANCTIONS           : "imposes_sanction"
+    COUNTRIES          ||--o{ SANCTIONS           : "targeted_by"
+    PRODUCTS           ||--o{ SANCTIONS           : "restricted_by"
