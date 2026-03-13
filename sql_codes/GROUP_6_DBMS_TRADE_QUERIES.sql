@@ -49,7 +49,7 @@ LEFT JOIN trade_flows  tf ON tf.exporter_id = t.exporting_country
                           AND tf.product_id  = t.product_id
                           AND tf.year        = t.year
 WHERE t.applied_rate > 10
-ORDER BY t.applied_rate DESC, tf.trade_value_usd DESC NULLS LAST;
+ORDER BY t.applied_rate DESC, tf.trade_value_usd DESC;
 
 -- ─────────────────────────────────────────────
 -- Q4. Effect of trade agreements: preference margin by agreement
@@ -59,7 +59,7 @@ SELECT
     COUNT(*)                          AS tariff_lines,
     ROUND(AVG(preference_margin), 2)  AS avg_margin_pct,
     ROUND(MAX(preference_margin), 2)  AS max_margin_pct,
-    STRING_AGG(DISTINCT importer, ', ' ORDER BY importer) AS importers
+    GROUP_CONCAT(DISTINCT importer ORDER BY importer SEPARATOR ', ' ) AS importers
 FROM vw_tariff_preference
 WHERE agreement_name IS NOT NULL
 GROUP BY agreement_name
@@ -103,7 +103,7 @@ LEFT JOIN trade_flows tf
     ON  (tf.exporter_id = s.target_country AND tf.importer_id = s.imposing_country
       OR tf.exporter_id = s.imposing_country AND tf.importer_id = s.target_country)
     AND (s.product_id IS NULL OR tf.product_id = s.product_id)
-    AND tf.year = EXTRACT(YEAR FROM s.start_date)::INT
+    AND tf.year = EXTRACT(YEAR FROM s.start_date) -- returns int by default
 GROUP BY imp.country_name, tgt.country_name, p.product_name, s.start_date, s.sanction_type
 ORDER BY s.start_date;
 
@@ -141,7 +141,7 @@ country_product AS (
 SELECT
     c.country_name,
     p.product_name,
-    tf.year,
+    cp.year,
     ROUND(cp.product_exports / ct.total_exports * 100, 1) AS export_concentration_pct
 FROM country_product cp
 JOIN country_totals ct ON ct.exporter_id = cp.exporter_id AND ct.year = cp.year

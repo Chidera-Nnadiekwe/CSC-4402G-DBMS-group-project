@@ -24,22 +24,21 @@ CREATE TABLE countries (
     wto_member BOOLEAN DEFAULT TRUE,
     joined_wto DATE
 );
---Comment: iso_alpha2 = 2-letter country code (e.g., 'US', 'CA', 'MX'), iso_alpha3 = 3-letter country code (e.g., 'USA', 'CAN', 'MEX').
+-- Comment: iso_alpha2 = 2-letter country code (e.g., 'US', 'CA', 'MX'), iso_alpha3 = 3-letter country code (e.g., 'USA', 'CAN', 'MEX').
 
 -- ─────────────────────────────────────────────
 -- 3. PRODUCT CATEGORIES  (HS Section level)
 -- ─────────────────────────────────────────────
 CREATE TABLE product_categories (
     category_id SERIAL PRIMARY KEY,
-    category_name VARCHAR(150) NOT NULL UNIQUE,
-    -- e.g. 'Machinery & Electronics'
+    category_name VARCHAR(150) NOT NULL UNIQUE,    -- e.g. 'Machinery & Electronics'
     hs_section SMALLINT NOT NULL UNIQUE -- HS Section number 1-21
 );
----Comment: The Harmonized System (HS) is an internationally standardized system of names and numbers for classifying traded products. It is organized into 21 sections, which are further divided into 99 chapters (2-digit), headings (4-digit), and subheadings (6-digit). The 'hs_section' field in the 'product_categories' table corresponds to the top-level section of the HS classification, allowing us to group products into broad categories based on their HS section. For example, Section 1 includes 'Live animals; animal products', while Section 16 includes 'Machinery and mechanical appliances; electrical equipment'.
+-- Comment: The Harmonized System (HS) is an internationally standardized system of names and numbers for classifying traded products. It is organized into 21 sections, which are further divided into 99 chapters (2-digit), headings (4-digit), and subheadings (6-digit). The 'hs_section' field in the 'product_categories' table corresponds to the top-level section of the HS classification, allowing us to group products into broad categories based on their HS section. For example, Section 1 includes 'Live animals; animal products', while Section 16 includes 'Machinery and mechanical appliances; electrical equipment'. 
 
 -- ─────────────────────────────────────────────
 -- 4. PRODUCTS  (HS 6-digit heading)
--- ─────────────────────────────────────────────
+-- ───────────────────────────────────────────── 
 CREATE TABLE products (
     product_id SERIAL PRIMARY KEY,
     hs_code CHAR(6) NOT NULL UNIQUE, -- Harmonized System 6-digit code
@@ -47,7 +46,7 @@ CREATE TABLE products (
     category_id INT NOT NULL REFERENCES product_categories(category_id),
     unit_of_measure VARCHAR(30) DEFAULT 'kg' -- kg, units, barrels, etc.
 );
---Comment: The 'hs_code' field in the 'products' table corresponds to the 6-digit code from the Harmonized System (HS) classification. This code provides a detailed classification of traded products, allowing for precise identification and analysis of trade flows. For example, the HS code '010121' corresponds to 'Live horses, purebred breeding animals', while '847130' corresponds to 'Portable automatic data processing machines, weighing not more than 10 kg, consisting of at least a central processing unit and an input and output unit, whether or not containing in the same housing one or two of the following: storage units, recording or reproducing units, keyboards, or monitors'.
+-- Comment: The 'hs_code' field in the 'products' table corresponds to the 6-digit code from the Harmonized System (HS) classification. This code provides a detailed classification of traded products, allowing for precise identification and analysis of trade flows. For example, the HS code '010121' corresponds to 'Live horses, purebred breeding animals', while '847130' corresponds to 'Portable automatic data processing machines, weighing not more than 10 kg, consisting of at least a central processing unit and an input and output unit, whether or not containing in the same housing one or two of the following: storage units, recording or reproducing units, keyboards, or monitors'.
 
 -- ─────────────────────────────────────────────
 -- 5. TRADE AGREEMENTS
@@ -64,7 +63,7 @@ CREATE TABLE trade_agreements (
     expiry_date DATE,
     description TEXT
 );
---Comment: 'FTA' = Free Trade Agreement, 'CU' = Customs Union, 'EIA' = Economic Integration Agreement, 'PTA' = Preferential Trade Agreement, 'WTO' = World Trade Organization membership, 'OTHER' = any other type of trade agreement not covered by the previous categories.
+-- Comment: 'FTA' = Free Trade Agreement, 'CU' = Customs Union, 'EIA' = Economic Integration Agreement, 'PTA' = Preferential Trade Agreement, 'WTO' = World Trade Organization membership, 'OTHER' = any other type of trade agreement not covered by the previous categories.
 
 -- ─────────────────────────────────────────────
 -- 6. AGREEMENT MEMBERSHIP
@@ -117,7 +116,7 @@ CREATE TABLE trade_flows (
     CONSTRAINT no_self_trade CHECK (exporter_id <> importer_id),
     UNIQUE (exporter_id, importer_id, product_id, year)
 );
---Comment: FOB (Free On Board) value represents the value of goods at the point of export, excluding transportation and insurance costs. The 'quantity' field allows us to analyze trade volumes in addition to trade values, providing insights into the physical flow of goods between countries./
+-- Comment: FOB (Free On Board) value represents the value of goods at the point of export, excluding transportation and insurance costs. The 'quantity' field allows us to analyze trade volumes in addition to trade values, providing insights into the physical flow of goods between countries./
 
 -- ─────────────────────────────────────────────
 -- 9. EXCHANGE RATES  (optional relation)
@@ -130,7 +129,7 @@ CREATE TABLE exchange_rates (
     usd_rate NUMERIC(18, 6) NOT NULL, -- units of local currency per 1 USD
     UNIQUE (country_id, year)
 );
---Comment: ISO 4217 is the international standard for currency codes, where each currency is represented by a three-letter code (e.g., 'USD' for US Dollar, 'EUR' for Euro, 'JPY' for Japanese Yen). The 'usd_rate' field indicates how many units of the local currency are equivalent to one US Dollar, allowing for currency conversion and analysis of trade values in a common currency.
+-- Comment: ISO 4217 is the international standard for currency codes, where each currency is represented by a three-letter code (e.g., 'USD' for US Dollar, 'EUR' for Euro, 'JPY' for Japanese Yen). The 'usd_rate' field indicates how many units of the local currency are equivalent to one US Dollar, allowing for currency conversion and analysis of trade values in a common currency.
 
 -- ─────────────────────────────────────────────
 -- 10. SANCTIONS  (optional relation)
