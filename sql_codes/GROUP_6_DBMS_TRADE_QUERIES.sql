@@ -11,7 +11,7 @@ SELECT
     year,
     ROUND(total_two_way_usd / 1e9, 1) AS total_billion_usd
 FROM vw_bilateral_trade
-WHERE year = 2023
+WHERE year = 2022
 ORDER BY total_two_way_usd DESC
 LIMIT 10;
 
@@ -20,12 +20,12 @@ LIMIT 10;
 -- ─────────────────────────────────────────────
 SELECT
     country_name,
-    ROUND(exports_usd       / 1e9, 1) AS exports_bn,
+    ROUND(exports_usd / 1e9, 1) AS exports_bn,
     ROUND(ABS(imports_neg_usd) / 1e9, 1) AS imports_bn,
     ROUND(trade_balance_usd / 1e9, 1) AS balance_bn,
     CASE WHEN trade_balance_usd > 0 THEN '▲ Surplus' ELSE '▼ Deficit' END AS status
 FROM vw_trade_balance
-WHERE year = 2023
+WHERE year = 2022
 ORDER BY trade_balance_usd DESC;
 
 -- ─────────────────────────────────────────────
@@ -78,7 +78,7 @@ SELECT
 FROM trade_flows tf
 JOIN products          p  ON p.product_id  = tf.product_id
 JOIN product_categories pc ON pc.category_id = p.category_id
-WHERE tf.year = 2023
+WHERE tf.year = 2022
 GROUP BY p.hs_code, p.product_name, pc.category_name
 ORDER BY global_flow_bn_usd DESC
 LIMIT 10;
@@ -121,7 +121,7 @@ JOIN countries e  ON e.country_id = tf.exporter_id
 JOIN countries i  ON i.country_id = tf.importer_id
 JOIN regions   er ON er.region_id = e.region_id
 JOIN regions   ir ON ir.region_id = i.region_id
-WHERE tf.year = 2023
+WHERE tf.year = 2022
 GROUP BY er.region_name, ir.region_name
 ORDER BY flow_bn_usd DESC;
 
@@ -147,7 +147,7 @@ FROM country_product cp
 JOIN country_totals ct ON ct.exporter_id = cp.exporter_id AND ct.year = cp.year
 JOIN countries c ON c.country_id = cp.exporter_id
 JOIN products  p ON p.product_id = cp.product_id
-WHERE cp.year = 2023
+WHERE cp.year = 2022
   AND cp.product_exports / ct.total_exports > 0.30   -- >30% of exports = 1 product
 ORDER BY export_concentration_pct DESC
 LIMIT 10;
@@ -170,6 +170,6 @@ JOIN countries i      ON i.country_id  = tf.importer_id
 JOIN products  p      ON p.product_id  = tf.product_id
 LEFT JOIN exchange_rates xr_e ON xr_e.country_id = tf.exporter_id AND xr_e.year = tf.year
 LEFT JOIN exchange_rates xr_i ON xr_i.country_id = tf.importer_id AND xr_i.year = tf.year
-WHERE tf.year = 2023
+WHERE tf.year = 2022
 ORDER BY tf.trade_value_usd DESC
 LIMIT 10;
