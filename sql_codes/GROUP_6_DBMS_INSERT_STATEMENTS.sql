@@ -4,6 +4,20 @@
 --  Sources: UN Comtrade, WTO, World Bank, IMF, ISO 3166-1
 -- ============================================================
 
+-- Clear existing data before inserting
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE sanctions;
+TRUNCATE TABLE tariffs;
+TRUNCATE TABLE trade_flows;
+TRUNCATE TABLE exchange_rates;
+TRUNCATE TABLE agreement_members;
+TRUNCATE TABLE trade_agreements;
+TRUNCATE TABLE products;
+TRUNCATE TABLE product_categories;
+TRUNCATE TABLE countries;
+TRUNCATE TABLE regions;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ─────────────────────────────────────────────
 -- 1. REGIONS
 -- ─────────────────────────────────────────────

@@ -173,3 +173,155 @@ LEFT JOIN exchange_rates xr_i ON xr_i.country_id = tf.importer_id AND xr_i.year 
 WHERE tf.year = 2022
 ORDER BY tf.trade_value_usd DESC
 LIMIT 10;
+
+-- ─────────────────────────────────────────────
+-- Q10. Countries with the most trade agreements
+-- ─────────────────────────────────────────────
+SELECT
+    c.country_name,
+    r.region_name,
+    COUNT(am.agreement_id)          AS total_agreements,
+    GROUP_CONCAT(ta.agreement_name ORDER BY ta.agreement_name SEPARATOR ', ') AS agreements
+FROM agreement_members am
+JOIN countries        c  ON c.country_id   = am.country_id
+JOIN regions          r  ON r.region_id    = c.region_id
+JOIN trade_agreements ta ON ta.agreement_id = am.agreement_id
+WHERE am.status = 'active'
+GROUP BY c.country_name, r.region_name
+ORDER BY total_agreements DESC
+LIMIT 10;
+
+-- ─────────────────────────────────────────────
+-- Q11. Top 10 importers of crude oil (HS 270900)
+-- ─────────────────────────────────────────────
+SELECT
+    i.country_name                          AS importer,
+    r.region_name,
+    ROUND(SUM(tf.trade_value_usd) / 1e9, 2) AS total_import_bn_usd,
+    SUM(tf.quantity)                         AS total_barrels
+FROM trade_flows tf
+JOIN countries i ON i.country_id = tf.importer_id
+JOIN regions   r ON r.region_id  = i.region_id
+JOIN products  p ON p.product_id = tf.product_id
+WHERE p.hs_code = '270900'
+  AND tf.year = 2022
+GROUP BY i.country_name, r.region_name
+ORDER BY total_import_bn_usd DESC
+LIMIT 10;
+
+-- ─────────────────────────────────────────────
+-- Q12. Average applied tariff rate by product category
+-- ─────────────────────────────────────────────
+SELECT
+    pc.category_name,
+    COUNT(t.tariff_id)              AS tariff_lines,
+    ROUND(AVG(t.mfn_rate), 2)       AS avg_mfn_rate_pct,
+    ROUND(AVG(t.applied_rate), 2)   AS avg_applied_rate_pct,
+    ROUND(AVG(t.mfn_rate - t.applied_rate), 2) AS avg_preference_margin_pct
+FROM tariffs t
+JOIN products         p  ON p.product_id  = t.product_id
+JOIN product_categories pc ON pc.category_id = p.category_id
+GROUP BY pc.category_name
+ORDER BY avg_applied_rate_pct DESC;
+
+-- ─────────────────────────────────────────────
+-- Q13. Countries currently under active sanctions
+--      and their total trade volume
+-- ─────────────────────────────────────────────
+SELECT
+    tgt.country_name                         AS sanctioned_country,
+    COUNT(DISTINCT s.imposing_country)       AS sanctioned_by_n_countries,
+    GROUP_CONCAT(DISTINCT imp.country_name ORDER BY imp.country_name SEPARATOR ', ') AS sanctioned_by,
+    ROUND(SUM(tf.trade_value_usd) / 1e9, 2) AS total_trade_bn_usd
+FROM sanctions s
+JOIN countries tgt ON tgt.country_id = s.target_country
+JOIN countries imp ON imp.country_id = s.imposing_country
+LEFT JOIN trade_flows tf
+    ON (tf.exporter_id = s.target_country OR tf.importer_id = s.target_country)
+    AND tf.year = 2022
+WHERE s.end_date IS NULL
+GROUP BY tgt.country_name
+ORDER BY sanctioned_by_n_countries DESC;
+
+-- ─────────────────────────────────────────────
+-- Q14. WTO members vs non-WTO members:
+--      average GDP and trade volume comparison
+-- ─────────────────────────────────────────────
+SELECT
+    CASE WHEN c.wto_member = 1 THEN 'WTO Member' ELSE 'Non-WTO Member' END AS membership_status,
+    COUNT(DISTINCT c.country_id)             AS country_count,
+    ROUND(AVG(c.gdp_usd) / 1e9, 1)          AS avg_gdp_bn_usd,
+    ROUND(SUM(tf.trade_value_usd) / 1e9, 1) AS total_trade_bn_usd
+FROM countries c
+LEFT JOIN trade_flows tf
+    ON (tf.exporter_id = c.country_id OR tf.importer_id = c.country_id)
+    AND tf.year = 2022
+GROUP BY c.wto_member
+ORDER BY total_trade_bn_usd DESC;
+
+-- ─────────────────────────────────────────────
+-- Q15. Countries that have a trade surplus AND
+--      are imposing active sanctions (sub-query)
+-- ─────────────────────────────────────────────
+SELECT
+    c.country_name,
+    ROUND(tb.trade_balance_usd / 1e9, 2) AS trade_surplus_bn_usd,
+    COUNT(DISTINCT s.target_country)     AS countries_sanctioned
+FROM countries c
+JOIN vw_trade_balance tb ON tb.country_name = c.country_name AND tb.year = 2022
+JOIN sanctions s ON s.imposing_country = c.country_id AND s.end_date IS NULL
+WHERE tb.trade_balance_usd > 0
+  AND c.country_id IN (
+      SELECT DISTINCT imposing_country
+      FROM sanctions
+      WHERE end_date IS NULL
+  )
+GROUP BY c.country_name, tb.trade_balance_usd
+ORDER BY trade_surplus_bn_usd DESC;
+
+-- ============================================================
+--  UPDATE STATEMENTS
+-- ============================================================
+
+-- ─────────────────────────────────────────────
+-- U1. Update GDP for the United States (2023 revised estimate)
+-- ─────────────────────────────────────────────
+UPDATE countries
+SET gdp_usd = 27360000000000.00
+WHERE iso_alpha3 = 'USA';
+
+-- ─────────────────────────────────────────────
+-- U2. Reduce the applied tariff rate for US importing
+--     laptops from China after a hypothetical trade deal
+-- ─────────────────────────────────────────────
+UPDATE tariffs
+SET applied_rate = 5.0,
+    notes = 'Reduced from 7.5% under Phase 2 trade deal'
+WHERE importing_country = (SELECT country_id FROM countries WHERE iso_alpha3 = 'USA')
+  AND exporting_country = (SELECT country_id FROM countries WHERE iso_alpha3 = 'CHN')
+  AND product_id        = (SELECT product_id FROM products WHERE hs_code = '847130')
+  AND year = 2023;
+
+-- ─────────────────────────────────────────────
+-- U3. Mark the China-Australia barley sanction as lifted
+-- ─────────────────────────────────────────────
+UPDATE sanctions
+SET end_date = '2023-08-05'
+WHERE imposing_country = (SELECT country_id FROM countries WHERE iso_alpha3 = 'CHN')
+  AND target_country   = (SELECT country_id FROM countries WHERE iso_alpha3 = 'AUS')
+  AND product_id       = (SELECT product_id FROM products WHERE hs_code = '100190');
+
+-- ─────────────────────────────────────────────
+-- U4. Update Russia's population estimate
+-- ─────────────────────────────────────────────
+UPDATE countries
+SET population = 144000000
+WHERE iso_alpha3 = 'RUS';
+
+-- ─────────────────────────────────────────────
+-- U5. Update exchange rate for Turkish Lira (2022 revised)
+-- ─────────────────────────────────────────────
+UPDATE exchange_rates
+SET usd_rate = 16.9700
+WHERE country_id = (SELECT country_id FROM countries WHERE iso_alpha3 = 'TUR')
+  AND year = 2022;

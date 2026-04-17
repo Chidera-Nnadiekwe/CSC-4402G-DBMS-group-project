@@ -1,0 +1,114 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-header {
+  background: #1e293b;
+  padding: 12px 24px;
+  border-bottom: 1px solid #334155;
+}
+
+.app-header h1 { font-size: 1.4rem; color: #f1f5f9; }
+.app-header p  { font-size: 0.85rem; color: #94a3b8; margin-top: 2px; }
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.map-container {
+  flex: 1;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.panel-container {
+  width: 420px;
+  background: #1e293b;
+  border-left: 1px solid #334155;
+  overflow-y: auto;
+}
+
+.panel { padding: 16px; height: 100%; }
+
+.panel.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.panel-header h2 { font-size: 1.3rem; color: #f1f5f9; margin-bottom: 6px; }
+
+.panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.panel-meta span {
+  background: #334155;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+
+.tabs button {
+  flex: 1;
+  padding: 7px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #94a3b8;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.tabs button.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+
+th {
+  background: #0f172a;
+  padding: 7px 8px;
+  text-align: left;
+  color: #64748b;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #1e293b;
+  color: #cbd5e1;
+}
+
+tr:hover td { background: #1e293b; }
+
+.surplus { color: #4ade80; }
+.deficit { color: #f87171; }
+.loading { color: #64748b; padding: 20px; text-align: center; }

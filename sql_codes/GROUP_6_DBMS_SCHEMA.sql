@@ -1,6 +1,8 @@
 -- ============================================================
 --  INTERNATIONAL TRADE RELATIONS DATABASE (ITRD) — SCHEMA DEFINITION
 -- ============================================================
+CREATE DATABASE IF NOT EXISTS itrd;
+USE itrd;
 -- ─────────────────────────────────────────────
 -- 1. REGIONS  (continent / trading bloc grouping)
 -- ─────────────────────────────────────────────
